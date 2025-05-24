@@ -10,11 +10,14 @@ from job_utils import (
     classify_single_job,
     classify_jobs_from_csv,
     analyze_classification_results,
-    load_latest_jobs_csv
+    load_latest_jobs_csv,
+    load_user_preferences,
+    load_new_jobs,
+    match_jobs_to_users
 )
 
 st.set_page_config(page_title="Job Clustering & Classification", layout="wide")
-st.title("🔍 Job Posting Classifier & Clusterer")
+st.title(" Job Posting Classifier & Clusterer")
 
 # Sidebar
 with st.sidebar:
@@ -23,7 +26,8 @@ with st.sidebar:
         "Scrape Job Listings",
         "Train Clustering Model",
         "Classify a Job",
-        "Batch Classify from CSV"
+        "Batch Classify from CSV",
+        "Send Job Alerts via Email"
     ])
 
 # Page 1: Scrape Job Listings
@@ -107,3 +111,25 @@ elif selection == "Batch Classify from CSV":
                 analyze_classification_results(results)
     else:
         st.warning("⚠️ No model found. Please train a model first.")
+
+# Page 5: Send Job Alerts via Email
+elif selection == "Send Job Alerts via Email":
+    st.header("📧 Send Job Alerts to Users")
+    sender_email = st.text_input("Sender Gmail address")
+    sender_password = st.text_input("App Password", type="password")
+
+    if st.button("Send Alerts"):
+        users_df = load_user_preferences()
+
+        clustered_files = glob.glob("jobs_clustered_*.csv")
+        if not clustered_files:
+            st.error("No clustered job files found. Please run clustering first.")
+        else:
+            latest_file = max(clustered_files, key=os.path.getctime)
+            jobs_df = load_new_jobs(latest_file)
+
+            if not users_df.empty and not jobs_df.empty:
+                match_jobs_to_users(users_df, jobs_df, sender_email, sender_password)
+                st.success("✅ Job alerts sent successfully!")
+            else:
+                st.warning("⚠️ Missing users or jobs data.")
