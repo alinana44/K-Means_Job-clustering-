@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import joblib
-from your_script import (
+from job_utils import (
     scrape_karkidi_jobs,
     preprocess_job_data,
     train_clustering_model,
