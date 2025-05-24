@@ -32,7 +32,8 @@ pages = [
 ]
 
 st.sidebar.title("Navigation")
-st.sidebar.write("Use arrows below to navigate")
+st.sidebar.write("Use arrows to navigate pages")
+st.sidebar.write(f"Page {st.session_state.page_index + 1} of {len(pages)}")
 if st.sidebar.button("⬅️ Previous"):
     st.session_state.page_index = (st.session_state.page_index - 1) % len(pages)
 if st.sidebar.button("➡️ Next"):
