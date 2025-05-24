@@ -19,13 +19,13 @@ from job_utils import (
 )
 
 st.set_page_config(page_title="Job Classifier & Notifier", layout="wide")
-st.title("Job Posting Classifier & Notifier")
+st.title("📊 Job Posting Classifier & Notifier")
 
 with st.sidebar:
     st.image("https://static.streamlit.io/examples/job_logo.png", width=150)
     st.title("Navigation")
     selection = st.radio("Go to", [
-        "1.Scrape Jobs",
+        "1. Scrape Jobs",
         "2. Train Clustering Model",
         "3. Classify a Job",
         "4. Batch Classify",
@@ -41,13 +41,13 @@ if selection == " Scrape Jobs":
         if not df.empty:
             filename = f"jobs_{keyword.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             df.to_csv(filename, index=False)
-            st.success(f" Scraped {len(df)} jobs.")
+            st.success(f"✅ Scraped {len(df)} jobs.")
             st.download_button("📁 Download Jobs CSV", df.to_csv(index=False), file_name=filename)
             st.dataframe(df.head())
         else:
-            st.warning("No jobs found.")
+            st.warning(" No jobs found.")
 
-elif selection == " Train Clustering Model":
+elif selection == "Train Clustering Model":
     st.header(" Train K-means Clustering on Jobs")
     if st.button("Load Latest Jobs & Train Model"):
         df = load_latest_jobs_csv()
@@ -60,12 +60,12 @@ elif selection == " Train Clustering Model":
             st.success(f"✅ Clustered Jobs: {clustered_filename}")
             st.dataframe(df_clustered.head())
         elif df is not None:
-            st.error("❗ Minimum 4 jobs required to cluster.")
+            st.error(" Minimum 4 jobs required to cluster.")
         else:
             st.warning(" Scrape jobs before training.")
 
 elif selection == " Classify a Job":
-    st.header("Classify a New Job Posting")
+    st.header(" Classify a New Job Posting")
     model_data = load_latest_model()
     if model_data:
         with st.form("job_form"):
@@ -84,11 +84,11 @@ elif selection == " Classify a Job":
                 st.metric(" Confidence", f"{result['confidence']:.3f}")
                 st.text_area("Extracted Skills", result['processed_skills'])
             else:
-                st.error(" Classification failed.")
+                st.error("Classification failed.")
     else:
         st.warning(" Train a model first.")
 
-elif selection == " Batch Classify":
+elif selection == "Batch Classify":
     st.header(" Classify Jobs from CSV File")
     model_data = load_latest_model()
     if model_data:
