@@ -19,35 +19,25 @@ from job_utils import (
 )
 
 st.set_page_config(page_title="Job Classifier & Notifier", layout="wide")
+st.title("📊 Job Posting Classifier & Notifier")
 
-if "page_index" not in st.session_state:
-    st.session_state.page_index = 0
+with st.sidebar:
+    st.image("https://static.streamlit.io/examples/job_logo.png", width=150)
+    st.title("Navigation")
+    selection = st.radio("Go to", [
+        "🔍 Scrape Jobs",
+        "🧠 Train Clustering Model",
+        "🧪 Classify a Job",
+        "📂 Batch Classify",
+        "📧 Send Email Alerts"
+    ])
 
-pages = [
-    "1. Scrape Jobs",
-    "2. Train Clustering Model",
-    "3. Classify a Job",
-    "4. Batch Classify",
-    "5. Send Email Alerts"
-]
-
-st.sidebar.title("Navigation")
-st.sidebar.write("Use arrows to navigate pages")
-st.sidebar.write(f"Page {st.session_state.page_index + 1} of {len(pages)}")
-if st.sidebar.button("⬅️ Previous"):
-    st.session_state.page_index = (st.session_state.page_index - 1) % len(pages)
-if st.sidebar.button("➡️ Next"):
-    st.session_state.page_index = (st.session_state.page_index + 1) % len(pages)
-
-selection = pages[st.session_state.page_index]
-st.title("Job Posting Classifier & Notifier")
-st.subheader(selection)
-
-if selection == "Scrape Jobs":
+if selection == "🔍 Scrape Jobs":
+    st.header("🔍 Scrape Job Listings from Karkidi.com")
     keyword = st.text_input("Enter job keyword:", value="data science")
-    pages_to_scrape = st.slider("Pages to scrape", 1, 10, 2)
+    pages = st.slider("Pages to scrape", 1, 10, 2)
     if st.button("Start Scraping"):
-        df = scrape_karkidi_jobs(keyword, pages_to_scrape)
+        df = scrape_karkidi_jobs(keyword, pages)
         if not df.empty:
             filename = f"jobs_{keyword.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             df.to_csv(filename, index=False)
@@ -55,9 +45,10 @@ if selection == "Scrape Jobs":
             st.download_button("📁 Download Jobs CSV", df.to_csv(index=False), file_name=filename)
             st.dataframe(df.head())
         else:
-            st.warning(" No jobs found.")
+            st.warning("⚠️ No jobs found.")
 
-elif selection == "Train Clustering Model":
+elif selection == "🧠 Train Clustering Model":
+    st.header("🧠 Train K-means Clustering on Jobs")
     if st.button("Load Latest Jobs & Train Model"):
         df = load_latest_jobs_csv()
         if df is not None and len(df) >= 4:
@@ -71,9 +62,10 @@ elif selection == "Train Clustering Model":
         elif df is not None:
             st.error("❗ Minimum 4 jobs required to cluster.")
         else:
-            st.warning(" Scrape jobs before training.")
+            st.warning("⚠️ Scrape jobs before training.")
 
-elif selection == " Classify a Job":
+elif selection == "🧪 Classify a Job":
+    st.header("🧪 Classify a New Job Posting")
     model_data = load_latest_model()
     if model_data:
         with st.form("job_form"):
@@ -88,15 +80,16 @@ elif selection == " Classify a Job":
             job_data = {'title': title, 'company': company, 'location': location, 'skills': skills, 'summary': summary}
             result = classify_single_job(job_data, model_data)
             if result:
-                st.success(f" Cluster: {result['cluster_id']}")
-                st.metric(" Confidence", f"{result['confidence']:.3f}")
+                st.success(f"🔖 Cluster: {result['cluster_id']}")
+                st.metric("📈 Confidence", f"{result['confidence']:.3f}")
                 st.text_area("Extracted Skills", result['processed_skills'])
             else:
-                st.error(" Classification failed.")
+                st.error("❌ Classification failed.")
     else:
-        st.warning(" Train a model first.")
+        st.warning("⚠️ Train a model first.")
 
-elif selection == " Batch Classify":
+elif selection == "📂 Batch Classify":
+    st.header("📂 Classify Jobs from CSV File")
     model_data = load_latest_model()
     if model_data:
         uploaded_file = st.file_uploader("Upload jobs CSV", type="csv")
@@ -111,9 +104,10 @@ elif selection == " Batch Classify":
                 st.dataframe(results.head())
                 analyze_classification_results(results)
     else:
-        st.warning(" Model not found. Train first.")
+        st.warning("⚠️ Model not found. Train first.")
 
 elif selection == "📧 Send Email Alerts":
+    st.header("📧 Notify Users of Matching Jobs")
     with st.form("email_form"):
         sender_email = st.text_input("Gmail address")
         sender_password = st.text_input("App password", type="password")
@@ -123,7 +117,7 @@ elif selection == "📧 Send Email Alerts":
         users_df = load_user_preferences()
         clustered_files = glob.glob("jobs_clustered_*.csv")
         if not clustered_files:
-            st.error(" No clustered job data found.")
+            st.error("❌ No clustered job data found.")
         else:
             latest_file = max(clustered_files, key=os.path.getctime)
             jobs_df = load_new_jobs(latest_file)
@@ -131,4 +125,4 @@ elif selection == "📧 Send Email Alerts":
                 match_jobs_to_users(users_df, jobs_df, sender_email, sender_password)
                 st.success("📩 Job alerts sent!")
             else:
-                st.warning(" Missing users or job data.")
+                st.warning("⚠️ Missing users or job data.")
