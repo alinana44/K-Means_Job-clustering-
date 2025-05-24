@@ -35,7 +35,7 @@ st.sidebar.title("Navigation")
 st.sidebar.write("Use arrows or click a page to navigate")
 st.sidebar.write(f"Page {st.session_state.page_index + 1} of {len(pages)}")
 
-# Display all pages with clickable buttons
+# Clickable navigation list
 st.sidebar.markdown("### All Pages")
 for i, page_name in enumerate(pages):
     if st.sidebar.button(f"{i + 1}. {page_name}"):
