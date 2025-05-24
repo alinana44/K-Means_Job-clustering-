@@ -34,6 +34,16 @@ pages = [
 st.sidebar.title("Navigation")
 st.sidebar.write("Use arrows to navigate pages")
 st.sidebar.write(f"Page {st.session_state.page_index + 1} of {len(pages)}")
+
+# Display all pages as reference
+st.sidebar.markdown("### All Pages")
+for i, page_name in enumerate(pages):
+    page_display = f"{i + 1}. {page_name}"
+    if i == st.session_state.page_index:
+        st.sidebar.markdown(f"**➡️ {page_display}**")
+    else:
+        st.sidebar.markdown(page_display)
+
 if st.sidebar.button("⬅️ Previous"):
     st.session_state.page_index = (st.session_state.page_index - 1) % len(pages)
 if st.sidebar.button("➡️ Next"):
