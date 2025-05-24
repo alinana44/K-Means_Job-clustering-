@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import joblib
+import glob
+import os
 from job_utils import (
     scrape_karkidi_jobs,
     preprocess_job_data,
@@ -10,21 +12,25 @@ from job_utils import (
     classify_single_job,
     classify_jobs_from_csv,
     analyze_classification_results,
-    load_latest_jobs_csv
+    load_latest_jobs_csv,
+    load_user_preferences,
+    load_new_jobs,
+    match_jobs_to_users
 )
 
 st.set_page_config(page_title="Job Clustering and Classification", layout="wide")
 st.title("Job Posting Classifier and Clusterer")
 
-# Create a sidebar menu for clean navigation
+# Sidebar Navigation
 st.sidebar.title("Navigation")
 menu = st.sidebar.radio("Select a Step", [
     "Scrape Job Listings",
     "Train Clustering Model",
-    "Classify a Job"
+    "Classify a Job",
+    "Send Email Alerts"
 ])
 
-# Scrape Jobs Page
+# Scrape Jobs
 if menu == "Scrape Job Listings":
     st.header("Step 1: Scrape Job Listings")
     with st.form("scrape_form"):
@@ -44,7 +50,7 @@ if menu == "Scrape Job Listings":
         else:
             st.warning("No jobs found. Please try again with a different keyword or check your internet connection.")
 
-# Train Clustering Page
+# Train Clustering
 elif menu == "Train Clustering Model":
     st.header("Step 2: Train Clustering Model")
     if st.button("Load Latest Jobs and Train Model"):
@@ -63,7 +69,7 @@ elif menu == "Train Clustering Model":
             else:
                 st.warning("No job listings found. Please scrape job listings first.")
 
-# Classify Job Page
+# Classify a Job
 elif menu == "Classify a Job":
     st.header("Step 3: Classify a Job")
     model_data = load_latest_model()
@@ -96,3 +102,26 @@ elif menu == "Classify a Job":
                 st.error("Failed to classify the job. Please make sure all required fields are filled in correctly.")
     else:
         st.warning("No trained clustering model found. Please train a model before classification.")
+
+# Send Email Alerts
+elif menu == "Send Email Alerts":
+    st.header("Step 4: Send Job Alerts via Email")
+    with st.form("email_form"):
+        sender_email = st.text_input("Sender Gmail Address")
+        sender_password = st.text_input("Gmail App Password", type="password")
+        submit_alerts = st.form_submit_button("Send Alerts")
+
+    if submit_alerts:
+        with st.spinner("Sending job alerts to users..."):
+            users_df = load_user_preferences()
+            clustered_files = glob.glob("jobs_clustered_*.csv")
+            if clustered_files:
+                latest_file = max(clustered_files, key=os.path.getctime)
+                jobs_df = load_new_jobs(latest_file)
+                if not users_df.empty and not jobs_df.empty:
+                    match_jobs_to_users(users_df, jobs_df, sender_email, sender_password)
+                    st.success("Job alerts sent successfully.")
+                else:
+                    st.warning("Missing user preferences or job listings.")
+            else:
+                st.error("No clustered job file found. Please cluster jobs first.")
